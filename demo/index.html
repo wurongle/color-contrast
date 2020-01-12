@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>color-contrast</title>
+    <link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/2.1.3/weui.min.css" />
+    <style>
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            background-color: #232323;
+            overflow: scroll;
+        }
+
+        .i {
+            display: inline-block;
+            font-size: 12px;
+            width: 65px;
+            margin: 5px 5px 0 0;
+            padding: 2px 2px;
+            outline: 1px solid transparent;
+            outline-offset: 1px;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="height: 100%;">
+        <div
+            style="height: 10%; padding:10px;box-sizing:border-box;align-items: center; width: 100%;  background: rgba(255,255,255,1); font-size: 14px;">
+            <div style="">感知亮度差值临界值：<span id="offset">0</span></div>
+            <div class="weui-slider-box" style="margin-top: 5px;">
+                <div id="slider" class="weui-slider">
+                    <div class="weui-slider__inner">
+                        <div class="weui-slider__track"></div>
+                        <div class="weui-slider__handler"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="height: 90%; width: 100%; overflow: scroll;-webkit-overflow-scrolling:touch">
+            <div id="page" style="width:1600px;"></div>
+        </div>
+    </div>
+    <script type="text/javascript" src="https://res.wx.qq.com/open/libs/weuijs/1.2.1/weui.min.js"></script>
+    <script type="module">
+        import ColorContrast from '../dist/main';
+
+        var timer;
+        var offsetEl = document.getElementById("offset");
+        var bgColorStr = '#232323';
+        weui.slider("#slider", {
+            step: 1,
+            defaultValue: 0,
+            onChange: function (percent) {
+                const limitBrightness = percent * 2.5
+                offsetEl.innerHTML = Number(limitBrightness).toFixed(0);
+                timer && clearTimeout(timer);
+                timer = setTimeout(() => {
+                    Array.from(document.querySelectorAll(".i")).forEach(el => {
+                        var textColorStr = el.getAttribute("data-textcolor");
+                        const ret = ColorContrast.AdjustTextContrast(textColorStr,bgColorStr,limitBrightness);
+                        if(ret){
+                            el.style.borderBottomColor = "red";
+                            el.style.borderLeftColor = ret;
+                            el.style.color = ret;
+                        }else{
+                            el.style.color = bc;
+                            el.style.borderColor = bc;
+                        }
+                    });
+                }, 1000);
+            }
+        });
+        
+        var colors = [];
+        var stepH = 5;
+        var stepS = 10;
+        var stepL = 5;
+        var brightness = 0;
+        
+        for (var h = 0; h <= 360;) {
+            colors.push(`<div style="font-weight:bold;margin:15px 0 10px;background:#fff;">色相H:${h}</div>`)
+            for (var s = 0; s <= 100;) {
+                for (var l = 0; l <= 100;) {
+                    var color = Color.hsl([h, s, l]);
+                    var rgb = color.rgb().array();
+                    var r = rgb[0].toFixed(0);
+                    var g = rgb[1].toFixed(0);
+                    var b = rgb[2].toFixed(0);
+
+                    brightness = Math.abs(+Number((r * 299 + g * 587 + b * 114) / 1000).toFixed(0));
+                    cdiff = (Math.max(bgRgb[0], r) - Math.min(bgRgb[0], r)) + (Math.max(bgRgb[1], g) - Math.min(bgRgb[1], g)) + (Math.max(bgRgb[2], b) - Math.min(bgRgb[2], b));
+
+                    colors.push(
+                        `<div class="i" data-brightness="${brightness}" data-cdiff="${cdiff}" data-textcolor="rgb(${r},${g},${b})" style="color:rgb(${r},${g},${b});border:1px solid rgb(${r},${g},${b});">\
+                            <p style="color:rgb(${r},${g},${b});">原始效果<br>${r},${g},${b}<br>${h},${s},${l}</p>\
+                            调整效果\
+                            <p class="h" style="color:#fff">B:${Math.abs(brightness - bgBrightness)}_D:${cdiff}</p>\
+                        </div>`
+                    );
+                    l += stepL;
+                }
+                s += stepS;
+            }
+            h += stepH;
+        }
+        document.getElementById("page").innerHTML = colors.join("");
+    </script>
+</body>
+
+</html>
