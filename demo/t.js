@@ -1,2 +1,2 @@
-const A = require('../dist/colorContrast')
-console.log(A)
+import ColorContrast from '../dist/colorContrast.js';
+console.log(ColorContrast)
