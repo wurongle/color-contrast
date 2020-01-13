@@ -51,4 +51,4 @@ const AdjustTextContrast = (
   }
 };
 
-export default { AdjustTextContrast };
+export { AdjustTextContrast };
