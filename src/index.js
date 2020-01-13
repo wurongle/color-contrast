@@ -51,8 +51,4 @@ const AdjustTextContrast = (
   }
 };
 
-// test
-const textColorStr = "rgb(0,0,204)";
-console.log(AdjustTextContrast(textColorStr).toString());
-
 export default { AdjustTextContrast };
