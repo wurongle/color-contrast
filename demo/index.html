@@ -51,7 +51,7 @@
     </div>
     <script type="text/javascript" src="https://res.wx.qq.com/open/libs/weuijs/1.2.1/weui.min.js"></script>
     <script type="module">
-        import {AdjustTextContrast} from '../dist/main.js';
+        import {AdjustTextContrast} from '../dist/colorContrast.js';
 
         var timer;
         var offsetEl = document.getElementById("offset");
@@ -60,7 +60,7 @@
             step: 1,
             defaultValue: 0,
             onChange: function (percent) {
-                const limitBrightness = percent * 2.5
+                const limitBrightness = percent * 2.5;
                 offsetEl.innerHTML = Number(limitBrightness).toFixed(0);
                 timer && clearTimeout(timer);
                 timer = setTimeout(() => {
