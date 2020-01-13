@@ -55,4 +55,4 @@ const AdjustTextContrast = (
 const textColorStr = "rgb(0,0,204)";
 console.log(AdjustTextContrast(textColorStr).toString());
 
-export { AdjustTextContrast };
+export default { AdjustTextContrast };
