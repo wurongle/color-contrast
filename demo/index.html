@@ -50,12 +50,14 @@
         </div>
     </div>
     <script type="text/javascript" src="https://res.wx.qq.com/open/libs/weuijs/1.2.1/weui.min.js"></script>
-    <script type="module">
-        import { AdjustTextContrast } from '../dist/colorContrast.js';
-
+    <script src="../dist/colorContrast.js"></script>
+    <script>
+        const {AdjustTextContrast, Color, getPerceivedBrightness} = ColorContrast;
         var timer;
         var offsetEl = document.getElementById("offset");
         var bgColorStr = '#232323';
+        var bgColor = Color(bgColorStr).rgb().array();
+        var bgBrightness = getPerceivedBrightness(...bgColor).toFixed(0);
         weui.slider("#slider", {
             step: 1,
             defaultValue: 0,
@@ -66,14 +68,14 @@
                 timer = setTimeout(() => {
                     Array.from(document.querySelectorAll(".i")).forEach(el => {
                         var textColorStr = el.getAttribute("data-textcolor");
-                        const ret = ColorContrast.AdjustTextContrast(textColorStr,bgColorStr,limitBrightness);
+                        const ret = AdjustTextContrast(textColorStr,bgColorStr,limitBrightness);
                         if(ret){
                             el.style.borderBottomColor = "red";
                             el.style.borderLeftColor = ret;
                             el.style.color = ret;
                         }else{
-                            el.style.color = bc;
-                            el.style.borderColor = bc;
+                            el.style.color = textColorStr;
+                            el.style.borderColor = textColorStr;
                         }
                     });
                 }, 1000);
@@ -96,8 +98,9 @@
                     var g = rgb[1].toFixed(0);
                     var b = rgb[2].toFixed(0);
 
-                    brightness = Math.abs(+Number((r * 299 + g * 587 + b * 114) / 1000).toFixed(0));
-                    cdiff = (Math.max(bgRgb[0], r) - Math.min(bgRgb[0], r)) + (Math.max(bgRgb[1], g) - Math.min(bgRgb[1], g)) + (Math.max(bgRgb[2], b) - Math.min(bgRgb[2], b));
+                    brightness = getPerceivedBrightness(r,g,b).toFixed(0);
+                    
+                    cdiff = (Math.max(bgColor[0], r) - Math.min(bgColor[0], r)) + (Math.max(bgColor[1], g) - Math.min(bgColor[1], g)) + (Math.max(bgColor[2], b) - Math.min(bgColor[2], b));
 
                     colors.push(
                         `<div class="i" data-brightness="${brightness}" data-cdiff="${cdiff}" data-textcolor="rgb(${r},${g},${b})" style="color:rgb(${r},${g},${b});border:1px solid rgb(${r},${g},${b});">\

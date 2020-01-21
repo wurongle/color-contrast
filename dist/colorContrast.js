@@ -1,18 +1,5 @@
-(function webpackUniversalModuleDefinition(root, factory) {
-	//Test Comment
-	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory();
-	//Test Comment
-	else if(typeof define === 'function' && define.amd)
-		define([], factory);
-	//Test Comment
-	else if(typeof exports === 'object')
-		exports["ColorContrast"] = factory();
-	//Test Comment
-	else
-		root["ColorContrast"] = factory();
-})(window, function() {
-return /******/ (function(modules) { // webpackBootstrap
+window["ColorContrast"] =
+/******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 /******/
@@ -195,13 +182,12 @@ eval("\n\nvar isArrayish = __webpack_require__(/*! is-arrayish */ \"./node_modul
 /*!**********************!*\
   !*** ./src/index.js ***!
   \**********************/
-/*! exports provided: AdjustTextContrast */
+/*! exports provided: AdjustTextContrast, Color, getPerceivedBrightness */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"AdjustTextContrast\", function() { return AdjustTextContrast; });\n/* harmony import */ var color__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! color */ \"./node_modules/color/index.js\");\n/* harmony import */ var color__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(color__WEBPACK_IMPORTED_MODULE_0__);\n\n\nconst DEFAULT_BACKGROUND_COLOR = \"#232323\";\n\n// https://www.w3.org/TR/AERT/#color-contrast\nconst getPerceivedBrightness = (r, g, b) => {\n  return (r * 299 + g * 587 + b * 114) / 1000;\n};\n\nconst AdjustTextContrast = (\n  textColorStr,\n  bgColorStr,\n  limitRelativeBrightness=80\n) => {\n  const textColor = color__WEBPACK_IMPORTED_MODULE_0___default()(textColorStr);\n  const textRgb = textColor.rgb().array();\n  const textAlpha = textColor.alpha();\n  const bgColor = color__WEBPACK_IMPORTED_MODULE_0___default()(bgColorStr || DEFAULT_BACKGROUND_COLOR);\n  const bgRgb = bgColor.rgb().array();\n  const textPBrightness = getPerceivedBrightness(...textRgb);\n  const bgPBrightness = getPerceivedBrightness(...bgRgb);\n  // const relativeBrightness = Math.abs(textPBrightness - bgPBrightness);\n  const limitBrightness = limitRelativeBrightness + bgPBrightness;\n\n  console.log(textPBrightness, bgPBrightness);\n\n  if (textPBrightness < limitBrightness) {\n    const relativeBrightnessRatio =\n      (limitBrightness * 1000) /\n      (textRgb[0] * 299 + textRgb[1] * 587 + textRgb[2] * 114);\n\n    let newTextR = Math.min(255, textRgb[0] * relativeBrightnessRatio);\n    let newTextG = Math.min(255, textRgb[1] * relativeBrightnessRatio);\n    let newTextB = Math.min(255, textRgb[2] * relativeBrightnessRatio);\n\n    if (newTextG == 0) {\n      newTextG = (limitBrightness * 1000 - newTextR * 299 - newTextB * 114) / 587;\n    } else if (newTextR == 0) {\n      newTextR = (limitBrightness * 1000 - newTextG * 587 - newTextB * 114) / 299;\n    } else if (newTextB == 0) {\n      newTextB = (limitBrightness * 1000 - newTextR * 299 - newTextG * 587) / 114;\n    } else if (newTextR == 255 || newTextB == 255) {\n      newTextG = (limitBrightness * 1000 - newTextR * 299 - newTextB * 114) / 587;\n    } else if (newTextG == 255) {\n      newTextB = (limitBrightness * 1000 - newTextR * 299 - newTextG * 587) / 114;\n    }\n\n    return color__WEBPACK_IMPORTED_MODULE_0___default.a.rgb(newTextR, newTextG, newTextB).alpha(textAlpha).rgb();\n  }else{\n    return;\n  }\n};\n\n\n\n\n//# sourceURL=webpack://ColorContrast/./src/index.js?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"AdjustTextContrast\", function() { return AdjustTextContrast; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"getPerceivedBrightness\", function() { return getPerceivedBrightness; });\n/* harmony import */ var color__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! color */ \"./node_modules/color/index.js\");\n/* harmony import */ var color__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(color__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony reexport (default from non-harmony) */ __webpack_require__.d(__webpack_exports__, \"Color\", function() { return color__WEBPACK_IMPORTED_MODULE_0___default.a; });\n\n\nconst DEFAULT_BACKGROUND_COLOR = \"#232323\";\n\n// https://www.w3.org/TR/AERT/#color-contrast\nconst getPerceivedBrightness = (r, g, b) => {\n  return (r * 299 + g * 587 + b * 114) / 1000;\n};\n\nconst AdjustTextContrast = (\n  textColorStr,\n  bgColorStr,\n  limitRelativeBrightness=80\n) => {\n  const textColor = color__WEBPACK_IMPORTED_MODULE_0___default()(textColorStr);\n  const textRgb = textColor.rgb().array();\n  const textAlpha = textColor.alpha();\n  const bgColor = color__WEBPACK_IMPORTED_MODULE_0___default()(bgColorStr || DEFAULT_BACKGROUND_COLOR);\n  const bgRgb = bgColor.rgb().array();\n  const textPBrightness = getPerceivedBrightness(...textRgb);\n  const bgPBrightness = getPerceivedBrightness(...bgRgb);\n  // const relativeBrightness = Math.abs(textPBrightness - bgPBrightness);\n  const limitBrightness = limitRelativeBrightness + bgPBrightness;\n\n  if (textPBrightness < limitBrightness) {\n    const relativeBrightnessRatio =\n      (limitBrightness * 1000) /\n      (textRgb[0] * 299 + textRgb[1] * 587 + textRgb[2] * 114);\n\n    let newTextR = Math.min(255, textRgb[0] * relativeBrightnessRatio);\n    let newTextG = Math.min(255, textRgb[1] * relativeBrightnessRatio);\n    let newTextB = Math.min(255, textRgb[2] * relativeBrightnessRatio);\n\n    if (newTextG == 0) {\n      newTextG = (limitBrightness * 1000 - newTextR * 299 - newTextB * 114) / 587;\n    } else if (newTextR == 0) {\n      newTextR = (limitBrightness * 1000 - newTextG * 587 - newTextB * 114) / 299;\n    } else if (newTextB == 0) {\n      newTextB = (limitBrightness * 1000 - newTextR * 299 - newTextG * 587) / 114;\n    } else if (newTextR == 255 || newTextB == 255) {\n      newTextG = (limitBrightness * 1000 - newTextR * 299 - newTextB * 114) / 587;\n    } else if (newTextG == 255) {\n      newTextB = (limitBrightness * 1000 - newTextR * 299 - newTextG * 587) / 114;\n    }\n\n    return color__WEBPACK_IMPORTED_MODULE_0___default.a.rgb(newTextR, newTextG, newTextB).alpha(textAlpha).rgb();\n  }else{\n    return;\n  }\n};\n\n\n\n\n//# sourceURL=webpack://ColorContrast/./src/index.js?");
 
 /***/ })
 
 /******/ });
-});

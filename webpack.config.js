@@ -1,9 +1,12 @@
+const path = require('path')
 module.exports = {
-    mode:'development',
+    mode: 'development',
+    entry: './src/index.js',
     output: {
-      library: 'ColorContrast',
-      libraryTarget: 'umd',
-      filename: 'colorContrast.js',
-      auxiliaryComment: 'Test Comment'
+        library: 'ColorContrast',
+        libraryTarget: 'window',
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'colorContrast.js'
     }
-  };
+    // ....
+}

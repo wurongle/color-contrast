@@ -22,8 +22,6 @@ const AdjustTextContrast = (
   // const relativeBrightness = Math.abs(textPBrightness - bgPBrightness);
   const limitBrightness = limitRelativeBrightness + bgPBrightness;
 
-  console.log(textPBrightness, bgPBrightness);
-
   if (textPBrightness < limitBrightness) {
     const relativeBrightnessRatio =
       (limitBrightness * 1000) /
@@ -51,4 +49,4 @@ const AdjustTextContrast = (
   }
 };
 
-export { AdjustTextContrast };
+export { AdjustTextContrast, Color, getPerceivedBrightness };
