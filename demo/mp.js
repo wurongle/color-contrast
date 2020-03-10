@@ -2014,11 +2014,12 @@ const colorNameReg = new RegExp(Object.keys(ColorName).join('|'), 'ig');
 const MEDIA_QUERY = '(prefers-color-scheme: dark)'; // Dark Mode的CSS媒体查询
 const HTML_CLASS = 'data_color_scheme_dark'; // 强制设置暗黑模式时给html加的class
 const TEXTCOLOR = '#666'; // 非Dark Mode下字体颜色
-const COLORATTR = 'data-darkmode-new-color';
-const OLDCOLORATTR = 'data-darkmode-old-color';
-const BGCOLORATTR = 'data-darkmode-new-bgcolor';
-const OLDBGCOLORATTR = 'data-darkmode-old-bgcolor';
+const COLORATTR = 'data-darkmode-color';
+const BGCOLORATTR = 'data-darkmode-bgcolor';
 const BGIMAGEATTR = 'data-darkmode-bgimage';
+const DEFAULT_DARK_BGCOLOR = '#232323';
+const LIMIT_LOW_BGCOLOR_BRIGHTNESS = 60;
+const DEFAULT_DARK_TEXTCOLOR = 'rgb(255,255,255,0.8)';
 const CLASS_PREFIX = 'dm_';
 const CLASS_REG = new RegExp(`${CLASS_PREFIX}\\d+`, 'g');
 const PAGE_HEIGHT = (window.getInnerHeight && window.getInnerHeight()) || window.innerHeight || document.documentElement.clientHeight;
@@ -2033,7 +2034,6 @@ let WHITELIST_NAME = ['mpcps', 'iframe']; // tag name白名单
 let MODE = ''; // 指定的颜色模式(dark|light)
 let allNodes = []; // 要处理的节点列表
 let firstPageNodes = []; // 首屏节点列表
-//let cssAll = ['', '']; // Dark Mode样式表，[首屏样式表, 非首屏样式表]
 let needJudgeFirstPage = true; // 需要判断首屏
 
 // 生成css
@@ -2115,7 +2115,7 @@ const convert = el => {
   let css = '';
 
   try {
-    let inlineStyleHasColor = false; // 是否有自定义字体颜色
+    let hasInlineColor = false; // 是否有自定义字体颜色
 
     // styles.cssText 读出来的颜色统一是rgba格式，除了用英文定义颜色（如：black、white）
     (styles.cssText && styles.cssText.split(';') || []).map(cssStr => { // 将cssStr转换为[key, value]，并清除各个元素的前后空白字符
@@ -2125,7 +2125,7 @@ const convert = el => {
       return ['-webkit-border-image', 'border-image', 'color', 'background-color', 'background-image', 'background', 'border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'border-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color'].indexOf(key) > -1;
     }).sort(([key]) => { // color属性放在最后
       if (key === 'color') {
-        inlineStyleHasColor = true;
+        hasInlineColor = true;
         return 0;
       }
       return -1;
@@ -2185,7 +2185,7 @@ const convert = el => {
         });
 
         // 没有设置自定义字体颜色，则使用非 Dark Mode 下默认字体颜色
-        !el.getAttribute(COLORATTR) && !inlineStyleHasColor && (css += genCss('color', TEXTCOLOR));
+        !el.getAttribute(COLORATTR) && !hasInlineColor && (css += genCss('color', TEXTCOLOR));
       }
 
       cssChange && (css += genCss(key, value));
@@ -2211,12 +2211,11 @@ const adjustBrightness2 = (color, el, options) => {
   // 处理方法：黑白灰色（h=0，s=0）亮度大于40%时，做取反处理（darkmode默认底色亮度为14%）；感知亮度大于190，取190；其他亮度小于26%时，设为26%。
   // 遗留问题：高亮度背景高亮度字体有些case有问题（使用感知亮度算法解决大部分case）
 
-  // 字体、边框：
-  // 处理原则：高亮度字体压字体亮度(白色除外)，低亮度字体调亮（补充优化：带背景图片子元素字体颜色不变，带高感知亮度背景颜色子元素字体颜色不变）
-  // 处理方法：亮度小于40%时，用（90%-该亮度），大于等于40%则保持不变；
-
-  // 阴影
-  // 处理原则：不转换
+  // 原则：
+  // - 用户设置为高亮字体颜色（接近白色亮度），不处理，保持高亮
+  // - 用户设置的其他字体颜色，无背景颜色，低于感知亮度阈值提高感知亮度
+  // - 用户设置的其他字体颜色，有背景颜色，根据调整后的背景颜色算出具有一定亮度差的字体颜色
+  // - 用户设置了背景图片的字体颜色，暂不处理，不知道背景图片是量还是暗？？
 
   const rgb = color.rgb().array();
   const hsl = color.hsl().array();
@@ -2224,7 +2223,10 @@ const adjustBrightness2 = (color, el, options) => {
   const perceivedBrightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000; // 计算感知亮度
   const whiteColorBrightness = 250;
   const limitBright = 190;
+  const limitLowTextBright = 75;
+  const LimitOffsetBrightness = 60;
   let newColor;
+  let extStyle;
 
   if (options.isBgColor) { // 背景色
     if ((hsl[1] === 0 && hsl[2] > 40) || perceivedBrightness > whiteColorBrightness) {
@@ -2242,28 +2244,81 @@ const adjustBrightness2 = (color, el, options) => {
       newColor = Color.hsl(...hsl);
       // console.info('[背景] 调亮，感知亮度%d：%c  测试  %c  测试  ', perceivedBrightness, `color:#fff;background:rgb(${rgb});`, `color:#fff;background:hsl(${hsl[0]},${hsl[1]}%,${hsl[2]}%)`);
     }
+    if(options.hasInlineColor == false){
+      var _parentTextColor = el.getAttribute(COLORATTR) || DEFAULT_DARK_TEXTCOLOR;
+      var _parentBgColorStr = newColor || color;
+      //el.setAttribute(BGCOLORATTR,newColor||color)
+      var _ret = adjustBrightness2(Color(_parentTextColor),el,{
+        isTextColor:true,
+        parentElementBgColorStr:_parentBgColorStr
+      });
+      if(_ret.newColor){
+        extStyle = genCss('color', _ret.newColor);
+      }
+    }
   } else if (options.isTextColor || options.isBorderColor) { // 字体色、边框色
-    let isParentElementBgColorLight = false;
-    const parentElementBgColorStr = el.getAttribute(BGCOLORATTR);
 
+    const parentElementBgColorStr = options.parentElementBgColorStr || el.getAttribute(BGCOLORATTR) || DEFAULT_DARK_BGCOLOR;
+    const parentElementBgColor = Color(parentElementBgColorStr);
+    const parentElementBgColorRgb = parentElementBgColor.rgb().array();
+    const parentElementBgColorHSL = parentElementBgColor.hsl().array();
+    const parentElementBGPerceivedBrightness = (parentElementBgColorRgb[0] * 299 + parentElementBgColorRgb[1] * 587 + parentElementBgColorRgb[2] * 114) / 1000;
     // 有背景图片，不改变自定义字体、边框颜色
     if (!el.getAttribute(BGIMAGEATTR)) {
-      // 父元素有背景色，则计算背景感知亮度并判断是否大于limitBright - 20
-      if (parentElementBgColorStr) {
-        const parentElementBgColor = Color(parentElementBgColorStr).rgb().array();
-        isParentElementBgColorLight = ((parentElementBgColor[0] * 299 + parentElementBgColor[1] * 587 + parentElementBgColor[2] * 114) / 1000) > limitBright - 20;
-      }
 
-      // 背景感知亮度小于等于limitBright - 20，字体（边框）亮度小于40%时，适当提高字体（边框）亮度
-      // 背景感知亮度大于limitBright - 20，字体（边框）感知亮度大于等于limitBright且小于whiteColorBrightness（白色）时，降低字体（边框）亮度
-      if ((!isParentElementBgColorLight && hsl[2] < 40) || (isParentElementBgColorLight && perceivedBrightness < whiteColorBrightness && perceivedBrightness >= limitBright)) {
-        hsl[2] = 90 - hsl[2];
-        newColor = Color.hsl(...hsl);
-        // console.info('[字体边框] 调亮，感知亮度%d：%c  测试  %c  测试  ', perceivedBrightness, `background:#fff;color:rgb(${rgb});`, `background:#232323;color:hsl(${hsl[0]},${hsl[1]}%,${hsl[2]}%)`);
+      // 用户设置为高亮字体颜色（接近白色亮度），不处理，保持高亮
+      if(perceivedBrightness >= whiteColorBrightness){
+        //el.style.outline = '1px solid yellow';
+      }else if(parentElementBGPerceivedBrightness <= LIMIT_LOW_BGCOLOR_BRIGHTNESS && perceivedBrightness < limitLowTextBright){
+        // 用户设置的其他字体颜色，无背景颜色或有低于阈值的背景颜色，低于感知亮度阈值的字体颜色提高感知亮度
+        if(hsl[2] <= 40){
+          hsl[2] = 90 - hsl[2];
+        }
+        var _rgb = Color.hsl(...hsl).rgb().array();
+        var _perceivedBrightness = (_rgb[0] * 299 + _rgb[1] * 587 + _rgb[2] * 114) / 1000;
+        if(_perceivedBrightness >= limitLowTextBright){
+          //el.style.outline = '1px solid red';
+          newColor = Color.hsl(...hsl);
+        }else{
+          const relativeBrightnessRatio = (limitLowTextBright * 1000) / (_rgb[0] * 299 + _rgb[1] * 587 + _rgb[2] * 114);
+
+          let newTextR = Math.min(255, _rgb[0] * relativeBrightnessRatio);
+          let newTextG = Math.min(255, _rgb[1] * relativeBrightnessRatio);
+          let newTextB = Math.min(255, _rgb[2] * relativeBrightnessRatio);
+
+          if (newTextG == 0) {
+            newTextG = (limitLowTextBright * 1000 - newTextR * 299 - newTextB * 114) / 587;
+          } else if (newTextR == 0) {
+            newTextR = (limitLowTextBright * 1000 - newTextG * 587 - newTextB * 114) / 299;
+          } else if (newTextB == 0) {
+            newTextB = (limitLowTextBright * 1000 - newTextR * 299 - newTextG * 587) / 114;
+          } else if (newTextR == 255 || newTextB == 255) {
+            newTextG = (limitLowTextBright * 1000 - newTextR * 299 - newTextB * 114) / 587;
+          } else if (newTextG == 255) {
+            newTextB = (limitLowTextBright * 1000 - newTextR * 299 - newTextG * 587) / 114;
+          }
+          //el.style.outline = '1px solid red';
+          newColor = Color.rgb(newTextR, newTextG, newTextB);
+        }
+      }else{
+        // 用户设置的其他字体颜色，有高于阈值感知亮度背景颜色，根据调整后的背景颜色算出具有一定亮度差的字体颜色
+        var offsetPerceivedBrightness = Math.abs(parentElementBGPerceivedBrightness-perceivedBrightness);
+        if(offsetPerceivedBrightness < LimitOffsetBrightness){
+          if(parentElementBGPerceivedBrightness > 100){
+            hsl[2] = 90 - hsl[2];
+          }else{
+            hsl[2] = parentElementBgColorHSL[2] + 40;
+          }
+          //el.style.outline = '1px solid yellow';
+          newColor = Color.hsl(...hsl);
+        }
       }
     }
   }
-  return newColor && newColor.alpha(alpha).rgb();
+  return {
+    newColor: newColor && newColor.alpha(alpha).rgb(),
+    extStyle: extStyle
+  }
 };
 
 // 转化单个节点
@@ -2274,17 +2329,19 @@ const convert2 = el => {
   let css = '';
 
   try {
-    let inlineStyleHasColor = false; // 是否有自定义字体颜色
+    let hasInlineColor = false; // 是否有自定义字体颜色
 
     // styles.cssText 读出来的颜色统一是rgba格式，除了用英文定义颜色（如：black、white）
     (styles.cssText && styles.cssText.split(';') || []).map(cssStr => { // 将cssStr转换为[key, value]，并清除各个元素的前后空白字符
       const splitIdx = cssStr.indexOf(':');
       return [cssStr.slice(0, splitIdx).toLowerCase(), cssStr.slice(splitIdx + 1)].map(item => (item || '').replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ''));
     }).filter(([key]) => { // 过滤掉一些key
+      if (key === 'color') {
+        hasInlineColor = true;
+      }
       return ['-webkit-border-image', 'border-image', 'color', 'background-color', 'background-image', 'background', 'border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'border-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color'].indexOf(key) > -1;
     }).sort(([key]) => { // color属性放在最后
       if (key === 'color') {
-        inlineStyleHasColor = true;
         return 0;
       }
       return -1;
@@ -2296,6 +2353,7 @@ const convert2 = el => {
 
       // 找出色值来处理
       const colorReg = /rgba?\([^)]+\)/ig;
+      let extStyle;
       if (colorReg.test(value)) {
         let isSetChildren = false;
         value = value.replace(colorReg, match => {
@@ -2303,17 +2361,21 @@ const convert2 = el => {
           const isBgColor = /^background/.test(key);
           const isTextColor = key === 'color';
           const isBorderColor = /^border/.test(key);
-          let retColor = adjustBrightness2(Color(match), el, {
+          let ret = adjustBrightness2(Color(match), el, {
             isBgColor,
             isTextColor,
-            isBorderColor
+            isBorderColor,
+            hasInlineColor
           });
+          let retColor = ret.newColor;
+
+          extStyle = ret.extStyle;
 
           // 对背景颜色和文字颜色做继承传递，用于文字亮度计算
-          if (retColor && !isSetChildren && (isBgColor || isTextColor)) {
+          if (isBgColor || isTextColor) {
             isSetChildren = true;
             const attrName = isBgColor ? BGCOLORATTR : COLORATTR;
-            const retColorStr = retColor.toString();
+            const retColorStr = retColor ? retColor.toString() : match;
             getChildrenAndIt(el).forEach(dom => {
               dom.setAttribute(attrName, retColorStr);
 
@@ -2330,6 +2392,10 @@ const convert2 = el => {
         }).replace(/\s?!\s?important/ig, '');
       }
 
+      if(extStyle){
+        css += extStyle;
+      }
+
       // 背景图片、边框图片
       const bgCoverOpacity = 0.15;
       if ((/^background/.test(key) || /^(-webkit-)?border-image/.test(key)) && /url\([^\)]*\)/i.test(value)) {
@@ -2344,7 +2410,7 @@ const convert2 = el => {
         });
 
         // 没有设置自定义字体颜色，则使用非 Dark Mode 下默认字体颜色
-        !el.getAttribute(COLORATTR) && !inlineStyleHasColor && (css += genCss('color', TEXTCOLOR));
+        !el.getAttribute(COLORATTR) && !hasInlineColor && (css += genCss('color', TEXTCOLOR));
       }
 
       cssChange && (css += genCss(key, value));
