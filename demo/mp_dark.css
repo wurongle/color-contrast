@@ -64,6 +64,9 @@
 }
 
 @media (prefers-color-scheme: dark) {
+  body{
+
+  }
   .icon_appmsg_tag {
     background-color: rgba(255, 255, 255, 0.15);
     color: rgba(255, 255, 255, 0.5);
@@ -92,6 +95,7 @@
     background-color: #232323;;
     color: rgba(255, 255, 255, 0.8);
   }
+  body,
   .article_dark .rich_media_content {
     color: rgba(255, 255, 255, 0.8);
   }
