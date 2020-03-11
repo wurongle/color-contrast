@@ -2013,7 +2013,8 @@ const Color = (() => {
 const colorNameReg = new RegExp(Object.keys(ColorName).join('|'), 'ig');
 const MEDIA_QUERY = '(prefers-color-scheme: dark)'; // Dark Mode的CSS媒体查询
 const HTML_CLASS = 'data_color_scheme_dark'; // 强制设置暗黑模式时给html加的class
-const TEXTCOLOR = 'rgba(0,0,0,0.9)'; // 非Dark Mode下字体颜色
+const TEXTCOLOR = '#666'; // 非Dark Mode下字体颜色
+const TEXTCOLOR_NEW = 'rgba(0,0,0,0.9)';
 const COLORATTR = 'data-darkmode-color';
 const BGCOLORATTR = 'data-darkmode-bgcolor';
 const BGIMAGEATTR = 'data-darkmode-bgimage';
@@ -2247,7 +2248,7 @@ const adjustBrightness2 = (color, el, options) => {
       // console.info('[背景] 调亮，感知亮度%d：%c  测试  %c  测试  ', perceivedBrightness, `color:#fff;background:rgb(${rgb});`, `color:#fff;background:hsl(${hsl[0]},${hsl[1]}%,${hsl[2]}%)`);
     }
     if(options.hasInlineColor == false){
-      var _parentTextColor = el.getAttribute(COLORATTR) || TEXTCOLOR;
+      var _parentTextColor = el.getAttribute(COLORATTR) || TEXTCOLOR_NEW;
       var _parentBgColorStr = newColor || color;
       //el.setAttribute(BGCOLORATTR,newColor||color)
       var _ret = adjustBrightness2(Color(_parentTextColor),el,{
