@@ -2013,13 +2013,11 @@ const Color = (() => {
 const colorNameReg = new RegExp(Object.keys(ColorName).join('|'), 'ig');
 const MEDIA_QUERY = '(prefers-color-scheme: dark)'; // Dark Mode的CSS媒体查询
 const HTML_CLASS = 'data_color_scheme_dark'; // 强制设置暗黑模式时给html加的class
-const TEXTCOLOR = '#666'; // 非Dark Mode下字体颜色
+const TEXTCOLOR = 'rgba(0,0,0,0.9)'; // 非Dark Mode下字体颜色
 const COLORATTR = 'data-darkmode-color';
 const BGCOLORATTR = 'data-darkmode-bgcolor';
 const BGIMAGEATTR = 'data-darkmode-bgimage';
 const DEFAULT_DARK_BGCOLOR = '#232323';
-const LIMIT_LOW_BGCOLOR_BRIGHTNESS = 60;
-const DEFAULT_DARK_TEXTCOLOR = 'rgb(255,255,255,0.8)';
 const CLASS_PREFIX = 'dm_';
 const CLASS_REG = new RegExp(`${CLASS_PREFIX}\\d+`, 'g');
 const PAGE_HEIGHT = (window.getInnerHeight && window.getInnerHeight()) || window.innerHeight || document.documentElement.clientHeight;
@@ -2229,6 +2227,10 @@ const adjustBrightness2 = (color, el, options) => {
   let extStyle;
 
   if (options.isBgColor) { // 背景色
+    // 如果设置背景颜色，取消背景图片的影响
+    if (el.getAttribute(BGIMAGEATTR)) {
+      el.removeAttribute(BGIMAGEATTR);
+    }
     if ((hsl[1] === 0 && hsl[2] > 40) || perceivedBrightness > whiteColorBrightness) {
       // 饱和度为0（黑白灰色），亮度大于40%或感知亮度大于250（白色）时，做亮度取反处理（Dark Mode 默认底色亮度为14%）
       newColor = Color.hsl(0, 0, Math.min(100, 100 + 14 - hsl[2]));
@@ -2245,15 +2247,17 @@ const adjustBrightness2 = (color, el, options) => {
       // console.info('[背景] 调亮，感知亮度%d：%c  测试  %c  测试  ', perceivedBrightness, `color:#fff;background:rgb(${rgb});`, `color:#fff;background:hsl(${hsl[0]},${hsl[1]}%,${hsl[2]}%)`);
     }
     if(options.hasInlineColor == false){
-      var _parentTextColor = el.getAttribute(COLORATTR) || DEFAULT_DARK_TEXTCOLOR;
+      var _parentTextColor = el.getAttribute(COLORATTR) || TEXTCOLOR;
       var _parentBgColorStr = newColor || color;
       //el.setAttribute(BGCOLORATTR,newColor||color)
       var _ret = adjustBrightness2(Color(_parentTextColor),el,{
         isTextColor:true,
         parentElementBgColorStr:_parentBgColorStr
       });
-      if(_ret.newColor){
+      if (_ret.newColor) {
         extStyle = genCss('color', _ret.newColor);
+      } else {
+        extStyle = genCss('color', _parentTextColor);
       }
     }
   } else if (options.isTextColor || options.isBorderColor) { // 字体色、边框色
@@ -2269,7 +2273,7 @@ const adjustBrightness2 = (color, el, options) => {
       // 用户设置为高亮字体颜色（接近白色亮度），不处理，保持高亮
       if(perceivedBrightness >= whiteColorBrightness){
         //el.style.outline = '1px solid yellow';
-      }else if(parentElementBGPerceivedBrightness <= LIMIT_LOW_BGCOLOR_BRIGHTNESS && perceivedBrightness < limitLowTextBright){
+      }else if(parentElementBGPerceivedBrightness <= TEXTCOLOR && perceivedBrightness < limitLowTextBright){
         // 用户设置的其他字体颜色，无背景颜色或有低于阈值的背景颜色，低于感知亮度阈值的字体颜色提高感知亮度
         if(hsl[2] <= 40){
           hsl[2] = 90 - hsl[2];
@@ -2410,7 +2414,10 @@ const convert2 = el => {
         });
 
         // 没有设置自定义字体颜色，则使用非 Dark Mode 下默认字体颜色
-        !el.getAttribute(COLORATTR) && !hasInlineColor && (css += genCss('color', TEXTCOLOR));
+        if (!el.getAttribute(COLORATTR) && !hasInlineColor) {
+          css += genCss('color', TEXTCOLOR);
+          getChildrenAndIt(el).forEach(dom => dom.setAttribute(COLORATTR, TEXTCOLOR));
+        }
       }
 
       cssChange && (css += genCss(key, value));
