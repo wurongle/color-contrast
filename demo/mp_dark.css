@@ -95,8 +95,7 @@
     background-color: #232323;;
     color: rgba(255, 255, 255, 0.8);
   }
-  body,
-  .article_dark .rich_media_content {
+  body .article_dark .rich_media_content {
     color: rgba(255, 255, 255, 0.8);
   }
   .article_dark a {
