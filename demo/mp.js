@@ -2019,6 +2019,7 @@ const COLORATTR = 'data-darkmode-color';
 const BGCOLORATTR = 'data-darkmode-bgcolor';
 const BGIMAGEATTR = 'data-darkmode-bgimage';
 const DEFAULT_DARK_BGCOLOR = '#232323';
+const DEFAULT_DARK_BGCOLOR_BRIGHTNESS = 35;
 const LIMIT_LOW_BGCOLOR_BRIGHTNESS = 60;
 const CLASS_PREFIX = 'dm_';
 const CLASS_REG = new RegExp(`${CLASS_PREFIX}\\d+`, 'g');
@@ -2274,14 +2275,16 @@ const adjustBrightness2 = (color, el, options) => {
     const parentElementBgColor = Color(parentElementBgColorStr);
     const parentElementBgColorRgb = parentElementBgColor.rgb().array();
     const parentElementBgColorHSL = parentElementBgColor.hsl().array();
-    const parentElementBGPerceivedBrightness = (parentElementBgColorRgb[0] * 299 + parentElementBgColorRgb[1] * 587 + parentElementBgColorRgb[2] * 114) / 1000;
+    const parentElementBgColorAlpha = parentElementBgColor.alpha();
+    const parentElementBGPerceivedBrightness = (parentElementBgColorRgb[0] * 299 + parentElementBgColorRgb[1] * 587 + parentElementBgColorRgb[2] * 114) / 1000 ;
+    const parentElementBGWithOpacityPerceivedBrightness = parentElementBGPerceivedBrightness * parentElementBgColorAlpha + DEFAULT_DARK_BGCOLOR_BRIGHTNESS * (1-parentElementBgColorAlpha);
 
     // 有背景图片，不改变自定义字体、边框颜色
     if (!el.getAttribute(BGIMAGEATTR)) {
       // 用户设置为高亮字体颜色（接近白色亮度），不处理，保持高亮
       if (perceivedBrightness >= whiteColorBrightness) {
         // el.style.outline = '1px solid yellow';
-      } else if (parentElementBGPerceivedBrightness <= LIMIT_LOW_BGCOLOR_BRIGHTNESS && perceivedBrightness < limitLowTextBright) {
+      } else if (parentElementBGWithOpacityPerceivedBrightness <= LIMIT_LOW_BGCOLOR_BRIGHTNESS && perceivedBrightness < limitLowTextBright) {
         // 用户设置的其他字体颜色，无背景颜色或有低于阈值的背景颜色，低于感知亮度阈值的字体颜色提高感知亮度
         if (hsl[2] <= 40) {
           hsl[2] = 90 - hsl[2];
@@ -2315,9 +2318,9 @@ const adjustBrightness2 = (color, el, options) => {
         }
       } else {
         // 用户设置的其他字体颜色，有高于阈值感知亮度背景颜色，根据调整后的背景颜色算出具有一定亮度差的字体颜色
-        const offsetPerceivedBrightness = Math.abs(parentElementBGPerceivedBrightness - perceivedBrightness);
+        const offsetPerceivedBrightness = Math.abs(parentElementBGWithOpacityPerceivedBrightness - perceivedBrightness);
         if (offsetPerceivedBrightness < LimitOffsetBrightness) {
-          if (parentElementBGPerceivedBrightness > 100) {
+          if (parentElementBGWithOpacityPerceivedBrightness > 100) {
             hsl[2] = 90 - hsl[2];
           } else {
             hsl[2] = parentElementBgColorHSL[2] + 40;
