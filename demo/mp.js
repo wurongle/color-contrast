@@ -2019,6 +2019,8 @@ const COLORATTR = 'data-darkmode-color';
 const BGCOLORATTR = 'data-darkmode-bgcolor';
 const BGIMAGEATTR = 'data-darkmode-bgimage';
 const ORIGINAL_COLORATTR = 'data-darkmode-original-color';
+const SVGFILLATTR = 'data-darkmode-fill';
+const ORIGINAL_SVGFILLATTR = 'data-darkmode-original-fill';
 const DEFAULT_DARK_BGCOLOR = '#232323';
 const DEFAULT_DARK_BGCOLOR_BRIGHTNESS = 35;
 const LIMIT_LOW_BGCOLOR_BRIGHTNESS = 60;
@@ -2037,6 +2039,20 @@ let MODE = ''; // 指定的颜色模式(dark|light)
 let allNodes = []; // 要处理的节点列表
 let firstPageNodes = []; // 首屏节点列表
 let needJudgeFirstPage = true; // 需要判断首屏
+
+const isSvg = (el) => isSvgTag(el.tagName.toLowerCase());
+const isSvgTag = (tag) => ['circle','ellipse','g','line','path','polygon','rect','svg','text'].indexOf(tag) > -1;
+const isSvgTextLikeTag =  (tag) => ['path','text'].indexOf(tag) > -1;
+const isSvgBgLikeColor = (tag, attr) => isSvgTag(tag) && !isSvgTextLikeTag(tag) && attr === 'fill';
+const isSvgTextLikeColor = (tag, attr) => isSvgTag(tag) && isSvgTextLikeTag(tag) && attr === 'fill';
+const parseSvgAttrStyles = (el) => {
+  const fill = el.getAttribute('fill');
+  try{
+    return fill ? [`fill:${Color(fill).rgb()}`] : [];
+  }catch(e){
+    return [];
+  }
+};
 
 // 生成css
 const genCss = (key, val) => `${key}: ${val} !important;`;
@@ -2438,19 +2454,22 @@ const convert_demo = el => {
 
   const styles = el.style;
   let css = '';
+  const tagName = el.tagName;
+  const isSvgEl = isSvg(el);
 
   try {
     let hasInlineColor = false; // 是否有自定义字体颜色
 
     // styles.cssText 读出来的颜色统一是rgba格式，除了用英文定义颜色（如：black、white）
-    (styles.cssText && styles.cssText.split(';') || []).map(cssStr => { // 将cssStr转换为[key, value]，并清除各个元素的前后空白字符
+    const stylesList = (isSvgEl ? parseSvgAttrStyles(el) : []).concat(styles.cssText && styles.cssText.split(';') || []);
+    stylesList.map(cssStr => { // 将cssStr转换为[key, value]，并清除各个元素的前后空白字符
       const splitIdx = cssStr.indexOf(':');
       return [cssStr.slice(0, splitIdx).toLowerCase(), cssStr.slice(splitIdx + 1)].map(item => (item || '').replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ''));
     }).filter(([key]) => { // 过滤掉一些key
-      if (key === 'color') {
+      if (key === 'color' || isSvgTextLikeColor(tagName, key)) {
         hasInlineColor = true;
       }
-      return ['-webkit-border-image', 'border-image', 'color', 'background-color', 'background-image', 'background', 'border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'border-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color'].indexOf(key) > -1;
+      return ['-webkit-border-image', 'border-image', 'color', 'background-color', 'background-image', 'background', 'border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'border-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color', 'fill'].indexOf(key) > -1;
     }).sort(([key]) => { // color属性放在最后
       if (key === 'color') {
         return 0;
@@ -2469,14 +2488,16 @@ const convert_demo = el => {
         // let isSetChildren = false;
         value = value.replace(colorReg, match => {
           // 使用颜色处理算法
-          const isBgColor = /^background/.test(key);
-          const isTextColor = key === 'color';
+          const isBgColor = /^background/.test(key) || isSvgBgLikeColor(tagName,key);
+          const isTextColor = key === 'color' || isSvgTextLikeColor(tagName,key);
           const isBorderColor = /^border/.test(key);
+          
           const ret = adjustBrightness_demo(Color(match), el, {
             isBgColor,
             isTextColor,
             isBorderColor,
-            hasInlineColor
+            hasInlineColor,
+            isSvgEl
           });
           const retColor = ret.newColor;
 
@@ -2488,11 +2509,15 @@ const convert_demo = el => {
             const attrName = isBgColor ? BGCOLORATTR : COLORATTR;
             const retColorStr = retColor ? retColor.toString() : match;
             getChildrenAndIt(el).forEach(dom => {
-              dom.setAttribute(attrName, retColorStr);
-              isTextColor && dom.setAttribute(ORIGINAL_COLORATTR, match);
-
+              if (isSvgEl && isSvg(dom)){
+                  dom.setAttribute(SVGFILLATTR, retColorStr);
+                  dom.setAttribute(ORIGINAL_SVGFILLATTR, match);
+              }else if(!isSvgEl && !isSvg(dom)){
+                  dom.setAttribute(attrName, retColorStr);
+                  isTextColor && dom.setAttribute(ORIGINAL_COLORATTR, match);
+              }
               // 如果设置背景颜色，取消背景图片的影响
-              if (isBgColor && dom.getAttribute(BGIMAGEATTR)) {
+              if (isBgColor && !isSvgEl && dom.getAttribute(BGIMAGEATTR)) {
                 dom.removeAttribute(BGIMAGEATTR);
               }
             });
@@ -2517,7 +2542,7 @@ const convert_demo = el => {
         // 因为已经保留了背景图片内文字的原颜色，无需再加蒙层
         value = value.replace(/^(.*?)url\(([^\)]*)\)(.*)$/i, (matches) => {
           if (el.getAttribute(BGIMAGEATTR) !== '1') { // 避免重复setAttribute
-            getChildrenAndIt(el).forEach(dom => dom.setAttribute(BGIMAGEATTR, '1'));
+            getChildrenAndIt(el).forEach(dom => !isSvg(dom) && dom.setAttribute(BGIMAGEATTR, '1'));
           }
           // return `${match1}linear-gradient(rgba(0, 0, 0, ${bgCoverOpacity}), rgba(0, 0, 0, ${bgCoverOpacity})), url(${match2})${match3}`;
           return matches;
@@ -2527,7 +2552,7 @@ const convert_demo = el => {
         if (!hasInlineColor) {
           const textColor = el.getAttribute(ORIGINAL_COLORATTR) || TEXTCOLOR;
           css += genCss('color', textColor);
-          getChildrenAndIt(el).forEach(dom => dom.setAttribute(COLORATTR, textColor));
+          getChildrenAndIt(el).forEach(dom => !isSvg(dom) && dom.setAttribute(COLORATTR, textColor));
         }
       }
 
