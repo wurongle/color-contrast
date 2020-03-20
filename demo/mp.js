@@ -2568,167 +2568,169 @@ writeStyle(cssAll_demo.join(""));
 
 // first_online ----------
 
-// var cssAll0 = [];
-// article_dark1.querySelectorAll("*").forEach(el => {
-//   cssAll0.push(convert0(el));
-// });
-// writeStyle(cssAll0.join(""));
-
 // 调整明度
-// const adjustBrightness0 = (color, el, options) => {
-//   // 背景：
-//   // 处理原则：白背景改黑，其他高感知亮度背景调暗，低亮度适当提高亮度（感知亮度：https://www.w3.org/TR/AERT/#color-contrast）
-//   // 处理方法：黑白灰色（h=0，s=0）亮度大于40%时，做取反处理（darkmode默认底色亮度为14%）；感知亮度大于190，取190；其他亮度小于26%时，设为26%。
-//   // 遗留问题：高亮度背景高亮度字体有些case有问题（使用感知亮度算法解决大部分case）
+const adjustBrightness0 = (color, el, options) => {
+  // 背景：
+  // 处理原则：白背景改黑，其他高感知亮度背景调暗，低亮度适当提高亮度（感知亮度：https://www.w3.org/TR/AERT/#color-contrast）
+  // 处理方法：黑白灰色（h=0，s=0）亮度大于40%时，做取反处理（darkmode默认底色亮度为14%）；感知亮度大于190，取190；其他亮度小于26%时，设为26%。
+  // 遗留问题：高亮度背景高亮度字体有些case有问题（使用感知亮度算法解决大部分case）
 
-//   // 字体、边框：
-//   // 处理原则：高亮度字体压字体亮度(白色除外)，低亮度字体调亮（补充优化：带背景图片子元素字体颜色不变，带高感知亮度背景颜色子元素字体颜色不变）
-//   // 处理方法：亮度小于40%时，用（90%-该亮度），大于等于40%则保持不变；
+  // 字体、边框：
+  // 处理原则：高亮度字体压字体亮度(白色除外)，低亮度字体调亮（补充优化：带背景图片子元素字体颜色不变，带高感知亮度背景颜色子元素字体颜色不变）
+  // 处理方法：亮度小于40%时，用（90%-该亮度），大于等于40%则保持不变；
 
-//   // 阴影
-//   // 处理原则：不转换
+  // 阴影
+  // 处理原则：不转换
 
-//   const rgb = color.rgb().array();
-//   const hsl = color.hsl().array();
-//   const alpha = color.alpha();
-//   const perceivedBrightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000; // 计算感知亮度
-//   const whiteColorBrightness = 250;
-//   const limitBright = 190;
-//   let newColor;
+  const rgb = color.rgb().array();
+  const hsl = color.hsl().array();
+  const alpha = color.alpha();
+  const perceivedBrightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000; // 计算感知亮度
+  const whiteColorBrightness = 250;
+  const limitBright = 190;
+  let newColor;
 
-//   if (options.isBgColor) { // 背景色
-//     if ((hsl[1] === 0 && hsl[2] > 40) || perceivedBrightness > whiteColorBrightness) {
-//       // 饱和度为0（黑白灰色），亮度大于40%或感知亮度大于250（白色）时，做亮度取反处理（Dark Mode 默认底色亮度为14%）
-//       newColor = Color.hsl(0, 0, Math.min(100, 100 + 14 - hsl[2]));
-//       // console.info('[背景] 白改黑，感知亮度%d：%c  测试  %c  测试  ', perceivedBrightness, `color:#fff;background:rgb(${rgb});`, `color:#fff;background:hsl(${hsl[0]},${hsl[1]}%,${hsl[2]}%)`);
-//     } else if (perceivedBrightness > limitBright) {
-//       // 感知亮度大于limitBright，将感知亮度设为limitBright
-//       const ratio = (limitBright * 1000) / (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114);
-//       newColor = Color.rgb(rgb[0] * ratio, rgb[1] * ratio, rgb[2] * ratio);
-//       // console.info('[背景] 调暗，感知亮度%d：%c  测试  %c  测试  ', perceivedBrightness, `color:#fff;background:rgb(${rgb});`, `color:#fff;background:rgb(${rgb[0] * ratio},${rgb[1] * ratio},${rgb[2] * ratio})`);
-//     } else if (hsl[2] < 26) {
-//       // 亮度小于26%，将亮度设为26%，适当提高亮度
-//       hsl[2] = 26;
-//       newColor = Color.hsl(...hsl);
-//       // console.info('[背景] 调亮，感知亮度%d：%c  测试  %c  测试  ', perceivedBrightness, `color:#fff;background:rgb(${rgb});`, `color:#fff;background:hsl(${hsl[0]},${hsl[1]}%,${hsl[2]}%)`);
-//     }
-//   } else if (options.isTextColor || options.isBorderColor) { // 字体色、边框色
-//     let isParentElementBgColorLight = false;
-//     const parentElementBgColorStr = el.getAttribute(BGCOLORATTR);
+  if (options.isBgColor) { // 背景色
+    if ((hsl[1] === 0 && hsl[2] > 40) || perceivedBrightness > whiteColorBrightness) {
+      // 饱和度为0（黑白灰色），亮度大于40%或感知亮度大于250（白色）时，做亮度取反处理（Dark Mode 默认底色亮度为14%）
+      newColor = Color.hsl(0, 0, Math.min(100, 100 + 14 - hsl[2]));
+      // console.info('[背景] 白改黑，感知亮度%d：%c  测试  %c  测试  ', perceivedBrightness, `color:#fff;background:rgb(${rgb});`, `color:#fff;background:hsl(${hsl[0]},${hsl[1]}%,${hsl[2]}%)`);
+    } else if (perceivedBrightness > limitBright) {
+      // 感知亮度大于limitBright，将感知亮度设为limitBright
+      const ratio = (limitBright * 1000) / (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114);
+      newColor = Color.rgb(rgb[0] * ratio, rgb[1] * ratio, rgb[2] * ratio);
+      // console.info('[背景] 调暗，感知亮度%d：%c  测试  %c  测试  ', perceivedBrightness, `color:#fff;background:rgb(${rgb});`, `color:#fff;background:rgb(${rgb[0] * ratio},${rgb[1] * ratio},${rgb[2] * ratio})`);
+    } else if (hsl[2] < 26) {
+      // 亮度小于26%，将亮度设为26%，适当提高亮度
+      hsl[2] = 26;
+      newColor = Color.hsl(...hsl);
+      // console.info('[背景] 调亮，感知亮度%d：%c  测试  %c  测试  ', perceivedBrightness, `color:#fff;background:rgb(${rgb});`, `color:#fff;background:hsl(${hsl[0]},${hsl[1]}%,${hsl[2]}%)`);
+    }
+  } else if (options.isTextColor || options.isBorderColor) { // 字体色、边框色
+    let isParentElementBgColorLight = false;
+    const parentElementBgColorStr = el.getAttribute(BGCOLORATTR);
 
-//     // 有背景图片，不改变自定义字体、边框颜色
-//     if (!el.getAttribute(BGIMAGEATTR)) {
-//       // 父元素有背景色，则计算背景感知亮度并判断是否大于limitBright - 20
-//       if (parentElementBgColorStr) {
-//         const parentElementBgColor = Color(parentElementBgColorStr).rgb().array();
-//         isParentElementBgColorLight = ((parentElementBgColor[0] * 299 + parentElementBgColor[1] * 587 + parentElementBgColor[2] * 114) / 1000) > limitBright - 20;
-//       }
+    // 有背景图片，不改变自定义字体、边框颜色
+    if (!el.getAttribute(BGIMAGEATTR)) {
+      // 父元素有背景色，则计算背景感知亮度并判断是否大于limitBright - 20
+      if (parentElementBgColorStr) {
+        const parentElementBgColor = Color(parentElementBgColorStr).rgb().array();
+        isParentElementBgColorLight = ((parentElementBgColor[0] * 299 + parentElementBgColor[1] * 587 + parentElementBgColor[2] * 114) / 1000) > limitBright - 20;
+      }
 
-//       // 背景感知亮度小于等于limitBright - 20，字体（边框）亮度小于40%时，适当提高字体（边框）亮度
-//       // 背景感知亮度大于limitBright - 20，字体（边框）感知亮度大于等于limitBright且小于whiteColorBrightness（白色）时，降低字体（边框）亮度
-//       if ((!isParentElementBgColorLight && hsl[2] < 40) || (isParentElementBgColorLight && perceivedBrightness < whiteColorBrightness && perceivedBrightness >= limitBright)) {
-//         hsl[2] = 90 - hsl[2];
-//         newColor = Color.hsl(...hsl);
-//         // console.info('[字体边框] 调亮，感知亮度%d：%c  测试  %c  测试  ', perceivedBrightness, `background:#fff;color:rgb(${rgb});`, `background:#232323;color:hsl(${hsl[0]},${hsl[1]}%,${hsl[2]}%)`);
-//       }
-//     }
-//   }
-//   return newColor && newColor.alpha(alpha).rgb();
-// };
+      // 背景感知亮度小于等于limitBright - 20，字体（边框）亮度小于40%时，适当提高字体（边框）亮度
+      // 背景感知亮度大于limitBright - 20，字体（边框）感知亮度大于等于limitBright且小于whiteColorBrightness（白色）时，降低字体（边框）亮度
+      if ((!isParentElementBgColorLight && hsl[2] < 40) || (isParentElementBgColorLight && perceivedBrightness < whiteColorBrightness && perceivedBrightness >= limitBright)) {
+        hsl[2] = 90 - hsl[2];
+        newColor = Color.hsl(...hsl);
+        // console.info('[字体边框] 调亮，感知亮度%d：%c  测试  %c  测试  ', perceivedBrightness, `background:#fff;color:rgb(${rgb});`, `background:#232323;color:hsl(${hsl[0]},${hsl[1]}%,${hsl[2]}%)`);
+      }
+    }
+  }
+  return newColor && newColor.alpha(alpha).rgb();
+};
 
 // 转化单个节点
-// const convert0 = el => {
-//   if (WHITELIST_NAME.indexOf(el.nodeName.toLowerCase()) > -1 || Array.prototype.some.call(el.classList, className => WHITELIST_CLASS.indexOf(className) > -1 || WHITELIST_CLASS_REG.some(reg => reg.test(className)))) return '';
+const convert0 = el => {
+  if (WHITELIST_NAME.indexOf(el.nodeName.toLowerCase()) > -1 || Array.prototype.some.call(el.classList, className => WHITELIST_CLASS.indexOf(className) > -1 || WHITELIST_CLASS_REG.some(reg => reg.test(className)))) return '';
 
-//   const styles = el.style;
-//   let css = '';
+  const styles = el.style;
+  let css = '';
 
-//   try {
-//     let inlineStyleHasColor = false; // 是否有自定义字体颜色
+  try {
+    let inlineStyleHasColor = false; // 是否有自定义字体颜色
 
-//     // styles.cssText 读出来的颜色统一是rgba格式，除了用英文定义颜色（如：black、white）
-//     (styles.cssText && styles.cssText.split(';') || []).map(cssStr => { // 将cssStr转换为[key, value]，并清除各个元素的前后空白字符
-//       const splitIdx = cssStr.indexOf(':');
-//       return [cssStr.slice(0, splitIdx).toLowerCase(), cssStr.slice(splitIdx + 1)].map(item => (item || '').replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ''));
-//     }).filter(([key]) => { // 过滤掉一些key
-//       return ['-webkit-border-image', 'border-image', 'color', 'background-color', 'background-image', 'background', 'border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'border-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color'].indexOf(key) > -1;
-//     }).sort(([key]) => { // color属性放在最后
-//       if (key === 'color') {
-//         inlineStyleHasColor = true;
-//         return 0;
-//       }
-//       return -1;
-//     }).forEach(([key, value]) => {
-//       let cssChange = false;
+    // styles.cssText 读出来的颜色统一是rgba格式，除了用英文定义颜色（如：black、white）
+    (styles.cssText && styles.cssText.split(';') || []).map(cssStr => { // 将cssStr转换为[key, value]，并清除各个元素的前后空白字符
+      const splitIdx = cssStr.indexOf(':');
+      return [cssStr.slice(0, splitIdx).toLowerCase(), cssStr.slice(splitIdx + 1)].map(item => (item || '').replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ''));
+    }).filter(([key]) => { // 过滤掉一些key
+      return ['-webkit-border-image', 'border-image', 'color', 'background-color', 'background-image', 'background', 'border', 'border-top', 'border-right', 'border-bottom', 'border-left', 'border-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color'].indexOf(key) > -1;
+    }).sort(([key]) => { // color属性放在最后
+      if (key === 'color') {
+        inlineStyleHasColor = true;
+        return 0;
+      }
+      return -1;
+    }).forEach(([key, value]) => {
+      let cssChange = false;
 
-//       // 将英文定义颜色转换为rgb格式
-//       value = value.replace(colorNameReg, match => `rgb(${ColorName[match.toLowerCase()].toString()})`);
+      // 将英文定义颜色转换为rgb格式
+      value = value.replace(colorNameReg, match => `rgb(${ColorName[match.toLowerCase()].toString()})`);
 
-//       // 找出色值来处理
-//       const colorReg = /rgba?\([^)]+\)/ig;
-//       if (colorReg.test(value)) {
-//         let isSetChildren = false;
-//         value = value.replace(colorReg, match => {
-//           // 使用颜色处理算法
-//           const isBgColor = /^background/.test(key);
-//           const isTextColor = key === 'color';
-//           const isBorderColor = /^border/.test(key);
-//           let retColor = adjustBrightness0(Color(match), el, {
-//             isBgColor,
-//             isTextColor,
-//             isBorderColor
-//           });
+      // 找出色值来处理
+      const colorReg = /rgba?\([^)]+\)/ig;
+      if (colorReg.test(value)) {
+        let isSetChildren = false;
+        value = value.replace(colorReg, match => {
+          // 使用颜色处理算法
+          const isBgColor = /^background/.test(key);
+          const isTextColor = key === 'color';
+          const isBorderColor = /^border/.test(key);
+          let retColor = adjustBrightness0(Color(match), el, {
+            isBgColor,
+            isTextColor,
+            isBorderColor
+          });
 
-//           // 对背景颜色和文字颜色做继承传递，用于文字亮度计算
-//           if (retColor && !isSetChildren && (isBgColor || isTextColor)) {
-//             isSetChildren = true;
-//             const attrName = isBgColor ? BGCOLORATTR : COLORATTR;
-//             const retColorStr = retColor.toString();
-//             getChildrenAndIt(el).forEach(dom => {
-//               dom.setAttribute(attrName, retColorStr);
+          // 对背景颜色和文字颜色做继承传递，用于文字亮度计算
+          if (retColor && !isSetChildren && (isBgColor || isTextColor)) {
+            isSetChildren = true;
+            const attrName = isBgColor ? BGCOLORATTR : COLORATTR;
+            const retColorStr = retColor.toString();
+            getChildrenAndIt(el).forEach(dom => {
+              dom.setAttribute(attrName, retColorStr);
 
-//               // 如果设置背景颜色，取消背景图片的影响
-//               if (isBgColor && dom.getAttribute(BGIMAGEATTR)) {
-//                 dom.removeAttribute(BGIMAGEATTR);
-//               }
-//             });
-//           }
+              // 如果设置背景颜色，取消背景图片的影响
+              if (isBgColor && dom.getAttribute(BGIMAGEATTR)) {
+                dom.removeAttribute(BGIMAGEATTR);
+              }
+            });
+          }
 
-//           retColor && (cssChange = true);
+          retColor && (cssChange = true);
 
-//           return retColor || match;
-//         }).replace(/\s?!\s?important/ig, '');
-//       }
+          return retColor || match;
+        }).replace(/\s?!\s?important/ig, '');
+      }
 
-//       // 背景图片、边框图片
-//       const bgCoverOpacity = 0.15;
-//       if ((/^background/.test(key) || /^(-webkit-)?border-image/.test(key)) && /url\([^\)]*\)/i.test(value)) {
-//         cssChange = true;
+      // 背景图片、边框图片
+      const bgCoverOpacity = 0.15;
+      if ((/^background/.test(key) || /^(-webkit-)?border-image/.test(key)) && /url\([^\)]*\)/i.test(value)) {
+        cssChange = true;
 
-//         // 在背景图片上加一层bgCoverOpacity透明度灰色背景，适当降低图片亮度
-//         value = value.replace(/^(.*?)url\(([^\)]*)\)(.*)$/i, (matches, match1, match2, match3) => {
-//           if (el.getAttribute(BGIMAGEATTR) !== '1') { // 避免重复setAttribute
-//             getChildrenAndIt(el).forEach(dom => dom.setAttribute(BGIMAGEATTR, '1'));
-//           }
-//           return `${match1}linear-gradient(rgba(0, 0, 0, ${bgCoverOpacity}), rgba(0, 0, 0, ${bgCoverOpacity})), url(${match2})${match3}`;
-//         });
+        // 在背景图片上加一层bgCoverOpacity透明度灰色背景，适当降低图片亮度
+        value = value.replace(/^(.*?)url\(([^\)]*)\)(.*)$/i, (matches, match1, match2, match3) => {
+          if (el.getAttribute(BGIMAGEATTR) !== '1') { // 避免重复setAttribute
+            getChildrenAndIt(el).forEach(dom => dom.setAttribute(BGIMAGEATTR, '1'));
+          }
+          return `${match1}linear-gradient(rgba(0, 0, 0, ${bgCoverOpacity}), rgba(0, 0, 0, ${bgCoverOpacity})), url(${match2})${match3}`;
+        });
 
-//         // 没有设置自定义字体颜色，则使用非 Dark Mode 下默认字体颜色
-//         !el.getAttribute(COLORATTR) && !inlineStyleHasColor && (css += genCss('color', TEXTCOLOR_OLD));
-//       }
+        // 没有设置自定义字体颜色，则使用非 Dark Mode 下默认字体颜色
+        !el.getAttribute(COLORATTR) && !inlineStyleHasColor && (css += genCss('color', TEXTCOLOR_OLD));
+      }
 
-//       cssChange && (css += genCss(key, value));
-//     });
-//   } catch (e) {
-//     console.error(e);
-//   }
+      cssChange && (css += genCss(key, value));
+    });
+  } catch (e) {
+    console.error(e);
+  }
 
-//   if (css) { // 有处理过才加class以及css
-//     isPC && el.setAttribute('data-style', styles.cssText); // PC端备份内联样式到data-style里，供编辑器做反处理
-//     const className = `${CLASS_PREFIX}${CLASSNAME_INDEX++}`;
-//     el.classList.add(className);
-//     return `${MODE === 'dark' ? `html.${HTML_CLASS} ` : ''}.${className}{${css}}`;
-//   }
+  if (css) { // 有处理过才加class以及css
+    isPC && el.setAttribute('data-style', styles.cssText); // PC端备份内联样式到data-style里，供编辑器做反处理
+    const className = `${CLASS_PREFIX}${CLASSNAME_INDEX++}`;
+    el.classList.add(className);
+    return `${MODE === 'dark' ? `html.${HTML_CLASS} ` : ''}.${className}{${css}}`;
+  }
 
-//   return '';
-// };
+  return '';
+};
+
+var article_dark_old = document.getElementById("article_dark_old");
+article_dark_old.innerHTML = article_light.innerHTML;
+var cssAll0 = [];
+article_dark_old.querySelectorAll("*").forEach(el => {
+  cssAll0.push(convert0(el));
+});
+writeStyle(cssAll0.join(""));
