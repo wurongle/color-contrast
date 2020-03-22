@@ -2373,56 +2373,68 @@ const adjustBrightness_demo = (color, el, options) => {
     const parentElementBgColorAlpha = parentElementBgColor.alpha();
     const parentElementBGPerceivedBrightness = (parentElementBgColorRgb[0] * 299 + parentElementBgColorRgb[1] * 587 + parentElementBgColorRgb[2] * 114) / 1000;
     const parentElementBGWithOpacityPerceivedBrightness = parentElementBGPerceivedBrightness * parentElementBgColorAlpha + DEFAULT_DARK_BGCOLOR_BRIGHTNESS * (1 - parentElementBgColorAlpha);
+    const adjustBrightnessByLimit = (limitBright, rgb) => {
+      const relativeBrightnessRatio = (limitBright * 1000) / (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114);
+      let newTextR = Math.min(255, rgb[0] * relativeBrightnessRatio);
+      let newTextG = Math.min(255, rgb[1] * relativeBrightnessRatio);
+      let newTextB = Math.min(255, rgb[2] * relativeBrightnessRatio);
+      if (newTextG === 0) {
+        newTextG = (limitBright * 1000 - newTextR * 299 - newTextB * 114) / 587;
+      } else if (newTextR === 0) {
+        newTextR = (limitBright * 1000 - newTextG * 587 - newTextB * 114) / 299;
+      } else if (newTextB === 0) {
+        newTextB = (limitBright * 1000 - newTextR * 299 - newTextG * 587) / 114;
+      } else if (newTextR === 255 || newTextB === 255) {
+        newTextG = (limitBright * 1000 - newTextR * 299 - newTextB * 114) / 587;
+      } else if (newTextG === 255) {
+        newTextB = (limitBright * 1000 - newTextR * 299 - newTextG * 587) / 114;
+      }
+      return Color.rgb(newTextR, newTextG, newTextB);
+    }
 
     // 有背景图片，不改变自定义字体、边框颜色
     if (!el.getAttribute(BGIMAGEATTR)) {
       // 用户设置为高亮字体颜色（接近白色亮度），不处理，保持高亮
       if (perceivedBrightness >= whiteColorBrightness) {
+
         // el.style.outline = '1px solid yellow';
-      } else if (parentElementBGWithOpacityPerceivedBrightness <= LIMIT_LOW_BGCOLOR_BRIGHTNESS && perceivedBrightness < limitLowTextBright) {
-        // 用户设置的其他字体颜色，无背景颜色或有低于阈值的背景颜色，低于感知亮度阈值的字体颜色提高感知亮度
-        if (hsl[2] <= 40) {
-          hsl[2] = 90 - hsl[2];
-          rgb = Color.hsl(...hsl).rgb().array();
-          perceivedBrightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
-        }
-
-        if (perceivedBrightness >= limitLowTextBright) {
-          // el.style.outline = '1px solid red';
-          newColor = Color.hsl(...hsl);
-        } else {
-          const relativeBrightnessRatio = (limitLowTextBright * 1000) / (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114);
-
-          let newTextR = Math.min(255, rgb[0] * relativeBrightnessRatio);
-          let newTextG = Math.min(255, rgb[1] * relativeBrightnessRatio);
-          let newTextB = Math.min(255, rgb[2] * relativeBrightnessRatio);
-
-          if (newTextG === 0) {
-            newTextG = (limitLowTextBright * 1000 - newTextR * 299 - newTextB * 114) / 587;
-          } else if (newTextR === 0) {
-            newTextR = (limitLowTextBright * 1000 - newTextG * 587 - newTextB * 114) / 299;
-          } else if (newTextB === 0) {
-            newTextB = (limitLowTextBright * 1000 - newTextR * 299 - newTextG * 587) / 114;
-          } else if (newTextR === 255 || newTextB === 255) {
-            newTextG = (limitLowTextBright * 1000 - newTextR * 299 - newTextB * 114) / 587;
-          } else if (newTextG === 255) {
-            newTextB = (limitLowTextBright * 1000 - newTextR * 299 - newTextG * 587) / 114;
-          }
-          // el.style.outline = '1px solid red';
-          newColor = Color.rgb(newTextR, newTextG, newTextB);
-        }
       } else {
-        // 用户设置的其他字体颜色，有高于阈值感知亮度背景颜色，根据调整后的背景颜色算出具有一定亮度差的字体颜色
-        const offsetPerceivedBrightness = Math.abs(parentElementBGWithOpacityPerceivedBrightness - perceivedBrightness);
-        if (offsetPerceivedBrightness < LimitOffsetBrightness) {
-          if (parentElementBGWithOpacityPerceivedBrightness > 100) {
+        let tmpPerceivedBrightness = perceivedBrightness;
+        let tmpRgb = rgb;
+        if (parentElementBGWithOpacityPerceivedBrightness <= LIMIT_LOW_BGCOLOR_BRIGHTNESS && perceivedBrightness < limitLowTextBright) {
+        // 用户设置的其他字体颜色，无背景颜色或有低于阈值的背景颜色，低于感知亮度阈值的字体颜色提高感知亮度\
+          if (hsl[2] <= 40) {
             hsl[2] = 90 - hsl[2];
-          } else {
-            hsl[2] = parentElementBgColorHSL[2] + 40;
+            tmpRgb = Color.hsl(...hsl).rgb().array();
+            tmpPerceivedBrightness = (tmpRgb[0] * 299 + tmpRgb[1] * 587 + tmpRgb[2] * 114) / 1000;
           }
-          // el.style.outline = '1px solid yellow';
-          newColor = Color.hsl(...hsl);
+
+          if (tmpPerceivedBrightness >= limitLowTextBright) {
+            // el.style.outline = '1px solid red';
+            newColor = Color.hsl(...hsl);
+          } else {
+            newColor = adjustBrightnessByLimit(limitLowTextBright, tmpRgb);
+          }
+        } else {
+          // 用户设置的其他字体颜色，有高于阈值感知亮度背景颜色，根据调整后的背景颜色算出具有一定亮度差的字体颜色
+          const offsetPerceivedBrightness = Math.abs(parentElementBGWithOpacityPerceivedBrightness - perceivedBrightness);
+          if (offsetPerceivedBrightness < LimitOffsetBrightness) {
+            if (parentElementBGWithOpacityPerceivedBrightness > 100) {
+              hsl[2] = 90 - hsl[2];
+            } else {
+              hsl[2] = parentElementBgColorHSL[2] + 40;
+            }
+            tmpRgb = Color.hsl(...hsl).rgb().array();
+            tmpPerceivedBrightness = (tmpRgb[0] * 299 + tmpRgb[1] * 587 + tmpRgb[2] * 114) / 1000;
+
+            if(Math.abs(parentElementBGWithOpacityPerceivedBrightness - tmpPerceivedBrightness) >= LimitOffsetBrightness){
+              newColor = Color.hsl(...hsl);
+            } else {
+              newColor = adjustBrightnessByLimit(parentElementBGWithOpacityPerceivedBrightness-LimitOffsetBrightness, tmpRgb);
+            }
+          }
         }
+
       }
     }
   }
