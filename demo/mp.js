@@ -2629,17 +2629,21 @@ const convert_demo = el => {
       }
 
       // 背景图片、边框图片
-      // const bgCoverOpacity = 0.15;
+       const bgCoverOpacity = 0.9;
       if ((/^background/.test(key) || /^(-webkit-)?border-image/.test(key)) && /url\([^\)]*\)/i.test(value)) {
-        // cssChange = true;
+         //cssChange = true;
 
         // 在背景图片上加一层bgCoverOpacity透明度灰色背景，适当降低图片亮度（已不适用）
         // 因为已经保留了背景图片内文字的原颜色，无需再加蒙层
-        value = value.replace(/^(.*?)url\(([^\)]*)\)(.*)$/i, (matches) => {
+        value = value.replace(/^(.*?)url\(([^\)]*)\)(.*)$/i, (matches, match1, match2, match3) => {
           if (el.getAttribute(BGIMAGEATTR) !== '1') { // 避免重复setAttribute
             getChildrenAndIt(el).forEach(dom => dom.setAttribute(BGIMAGEATTR, '1'));
           }
-          // return `${match1}linear-gradient(rgba(0, 0, 0, ${bgCoverOpacity}), rgba(0, 0, 0, ${bgCoverOpacity})), url(${match2})${match3}`;
+          // todo
+          // 1、需要移到背景颜色下
+          // 2、补色考虑添加一层1%黑
+          // 3、考虑高度补色 / 考虑字数补色
+          css += genCss('background-image', `url(${match2}),linear-gradient(rgba(255, 255, 255, ${bgCoverOpacity}), rgba(255, 255, 255, ${bgCoverOpacity}))`);
           return matches;
         });
 
@@ -2752,7 +2756,7 @@ function adjustTextBrightness(textColor, bgColor, parentBgColorPerceivedBrightne
   const offsetPerceivedBrightness = Math.abs(bgColorWithOpacityPerceivedBrightness - textPerceivedBrightness);
 
   // 用户设置为高亮字体颜色（接近白色亮度），不处理，保持高亮
-  if (textPerceivedBrightness >= whiteColorBrightness) return textColor;
+  //if (textPerceivedBrightness >= whiteColorBrightness) return textColor;
 
   // 如果感知亮度差大于阈值，无需调整
   if (offsetPerceivedBrightness >= limitOffsetBrightness) return textColor;
@@ -2774,4 +2778,4 @@ function adjustTextBrightness(textColor, bgColor, parentBgColorPerceivedBrightne
   }
 }
 
-//console.log('adjustTextBrightness:',adjustTextBrightness('#000','#000'))
+console.log('adjustTextBrightness:',adjustTextBrightness(Color('red'),Color('rgb(52,52,52)')));
