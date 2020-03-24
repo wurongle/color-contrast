@@ -2374,6 +2374,25 @@ const adjustBrightness_demo = (color, el, options) => {
     const parentElementBgColorAlpha = parentElementBgColor.alpha();
     const parentElementBGPerceivedBrightness = (parentElementBgColorRgb[0] * 299 + parentElementBgColorRgb[1] * 587 + parentElementBgColorRgb[2] * 114) / 1000;
     const parentElementBGWithOpacityPerceivedBrightness = parentElementBGPerceivedBrightness * parentElementBgColorAlpha + DEFAULT_DARK_BGCOLOR_BRIGHTNESS * (1 - parentElementBgColorAlpha);
+    const adjustTextBrightnessByLimitBrightness = (rgbArray, limitLowBright) => {
+      const relativeBrightnessRatio = (limitLowBright * 1000) / (rgbArray[0] * 299 + rgbArray[1] * 587 + rgbArray[2] * 114);
+          let newTextR = Math.min(255, rgbArray[0] * relativeBrightnessRatio);
+          let newTextG = Math.min(255, rgbArray[1] * relativeBrightnessRatio);
+          let newTextB = Math.min(255, rgbArray[2] * relativeBrightnessRatio);
+
+          if (newTextG === 0) {
+            newTextG = (limitLowBright * 1000 - newTextR * 299 - newTextB * 114) / 587;
+          } else if (newTextR === 0) {
+            newTextR = (limitLowBright * 1000 - newTextG * 587 - newTextB * 114) / 299;
+          } else if (newTextB === 0) {
+            newTextB = (limitLowBright * 1000 - newTextR * 299 - newTextG * 587) / 114;
+          } else if (newTextR === 255 || newTextB === 255) {
+            newTextG = (limitLowBright * 1000 - newTextR * 299 - newTextB * 114) / 587;
+          } else if (newTextG === 255) {
+            newTextB = (limitLowBright * 1000 - newTextR * 299 - newTextG * 587) / 114;
+          }
+          return Color.rgb(newTextR, newTextG, newTextB);
+    };
 
     // 有背景图片，不改变自定义字体、边框颜色
     if (!el.getAttribute(BGIMAGEATTR)) {
@@ -2392,25 +2411,7 @@ const adjustBrightness_demo = (color, el, options) => {
           // el.style.outline = '1px solid red';
           newColor = Color.hsl(...hsl);
         } else {
-          const relativeBrightnessRatio = (limitLowTextBright * 1000) / (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114);
-
-          let newTextR = Math.min(255, rgb[0] * relativeBrightnessRatio);
-          let newTextG = Math.min(255, rgb[1] * relativeBrightnessRatio);
-          let newTextB = Math.min(255, rgb[2] * relativeBrightnessRatio);
-
-          if (newTextG === 0) {
-            newTextG = (limitLowTextBright * 1000 - newTextR * 299 - newTextB * 114) / 587;
-          } else if (newTextR === 0) {
-            newTextR = (limitLowTextBright * 1000 - newTextG * 587 - newTextB * 114) / 299;
-          } else if (newTextB === 0) {
-            newTextB = (limitLowTextBright * 1000 - newTextR * 299 - newTextG * 587) / 114;
-          } else if (newTextR === 255 || newTextB === 255) {
-            newTextG = (limitLowTextBright * 1000 - newTextR * 299 - newTextB * 114) / 587;
-          } else if (newTextG === 255) {
-            newTextB = (limitLowTextBright * 1000 - newTextR * 299 - newTextG * 587) / 114;
-          }
-          // el.style.outline = '1px solid red';
-          newColor = Color.rgb(newTextR, newTextG, newTextB);
+          newColor = adjustTextBrightnessByLimitBrightness(rgb, limitLowTextBright);
         }
       } else {
         // 用户设置的其他字体颜色，有高于阈值感知亮度背景颜色，根据调整后的背景颜色算出具有一定亮度差的字体颜色
@@ -2418,11 +2419,21 @@ const adjustBrightness_demo = (color, el, options) => {
         if (offsetPerceivedBrightness < LimitOffsetBrightness) {
           if (parentElementBGWithOpacityPerceivedBrightness > 100) {
             hsl[2] = 90 - hsl[2];
+            let tmpRgb = Color.hsl(...hsl).rgb().array();
+            let tmpPerceivedBrightness = (tmpRgb[0] * 299 + tmpRgb[1] * 587 + tmpRgb[2] * 114) / 1000;
+            // 先以最小改动来修复这里的问题，后面再整理代码
+            if (parentElementBGWithOpacityPerceivedBrightness - tmpPerceivedBrightness < LimitOffsetBrightness){
+              // console.log(Math.abs(parentElementBGWithOpacityPerceivedBrightness - tmpPerceivedBrightness), el);
+              newColor = adjustTextBrightnessByLimitBrightness(tmpRgb, parentElementBGWithOpacityPerceivedBrightness - LimitOffsetBrightness);
+            } else {
+              newColor = Color.hsl(...hsl);
+            }
           } else {
             hsl[2] = parentElementBgColorHSL[2] + 40;
+            newColor = Color.hsl(...hsl);
           }
           // el.style.outline = '1px solid yellow';
-          newColor = Color.hsl(...hsl);
+          // newColor = Color.hsl(...hsl);
         }
       }
     }
