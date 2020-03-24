@@ -2019,6 +2019,7 @@ const COLORATTR = 'data-darkmode-color';
 const BGCOLORATTR = 'data-darkmode-bgcolor';
 const BGIMAGEATTR = 'data-darkmode-bgimage';
 const ORIGINAL_COLORATTR = 'data-darkmode-original-color';
+const ORIGINAL_BGCOLORATTR = 'data-darkmode-original-bgcolor';
 const DEFAULT_DARK_BGCOLOR = '#232323';
 const DEFAULT_DARK_BGCOLOR_BRIGHTNESS = 35;
 const LIMIT_LOW_BGCOLOR_BRIGHTNESS = 60;
@@ -2262,14 +2263,14 @@ const convert = el => {
       // 背景图片、边框图片
       const bgCoverOpacity = 0.15;
       if ((/^background/.test(key) || /^(-webkit-)?border-image/.test(key)) && /url\([^\)]*\)/i.test(value)) {
-        cssChange = true;
+        //cssChange = true;
 
         // 在背景图片上加一层bgCoverOpacity透明度灰色背景，适当降低图片亮度
         value = value.replace(/^(.*?)url\(([^\)]*)\)(.*)$/i, (matches, match1, match2, match3) => {
           if (el.getAttribute(BGIMAGEATTR) !== '1') { // 避免重复setAttribute
             getChildrenAndIt(el).forEach(dom => dom.setAttribute(BGIMAGEATTR, '1'));
           }
-          return `${match1}linear-gradient(rgba(0, 0, 0, ${bgCoverOpacity}), rgba(0, 0, 0, ${bgCoverOpacity})), url(${match2})${match3}`;
+          //return `${match1}linear-gradient(rgba(0, 0, 0, ${bgCoverOpacity}), rgba(0, 0, 0, ${bgCoverOpacity})), url(${match2})${match3}`;
         });
 
         // 没有设置自定义字体颜色，则使用非 Dark Mode 下默认字体颜色
@@ -2486,10 +2487,11 @@ const convert_demo = el => {
           if (isBgColor || isTextColor) {
             // isSetChildren = true;
             const attrName = isBgColor ? BGCOLORATTR : COLORATTR;
+            const originalAttrName = isBgColor ? ORIGINAL_BGCOLORATTR : ORIGINAL_COLORATTR;
             const retColorStr = retColor ? retColor.toString() : match;
             getChildrenAndIt(el).forEach(dom => {
               dom.setAttribute(attrName, retColorStr);
-              isTextColor && dom.setAttribute(ORIGINAL_COLORATTR, match);
+              dom.setAttribute(originalAttrName, match);
 
               // 如果设置背景颜色，取消背景图片的影响
               if (isBgColor && dom.getAttribute(BGIMAGEATTR)) {
@@ -2509,18 +2511,19 @@ const convert_demo = el => {
       }
 
       // 背景图片、边框图片
-      // const bgCoverOpacity = 0.15;
+      const bgCoverOpacity = 0.05;
       if ((/^background/.test(key) || /^(-webkit-)?border-image/.test(key)) && /url\([^\)]*\)/i.test(value)) {
-        // cssChange = true;
+        cssChange = true;
+        let imgBgColor = el.getAttribute(ORIGINAL_BGCOLORATTR) || 'rgb(255,255,255)';
 
         // 在背景图片上加一层bgCoverOpacity透明度灰色背景，适当降低图片亮度（已不适用）
         // 因为已经保留了背景图片内文字的原颜色，无需再加蒙层
-        value = value.replace(/^(.*?)url\(([^\)]*)\)(.*)$/i, (matches) => {
+        value = value.replace(/^(.*?)url\(([^\)]*)\)(.*)$/i, (matches, match1, match2, match3) => {
           if (el.getAttribute(BGIMAGEATTR) !== '1') { // 避免重复setAttribute
             getChildrenAndIt(el).forEach(dom => dom.setAttribute(BGIMAGEATTR, '1'));
           }
-          // return `${match1}linear-gradient(rgba(0, 0, 0, ${bgCoverOpacity}), rgba(0, 0, 0, ${bgCoverOpacity})), url(${match2})${match3}`;
-          return matches;
+          return `${match1}url(${match2})${match3},linear-gradient(rgba(0,0,0,${bgCoverOpacity}), rgba(0,0,0,${bgCoverOpacity})),linear-gradient(${imgBgColor}, ${imgBgColor})`;
+          //return matches;
         });
 
         // 没有设置自定义字体颜色，则使用非 Dark Mode 下默认字体颜色
