@@ -2511,10 +2511,11 @@ const convert_demo = el => {
       }
 
       // 背景图片、边框图片
-      const bgCoverOpacity = 0.05;
       if ((/^background/.test(key) || /^(-webkit-)?border-image/.test(key)) && /url\([^\)]*\)/i.test(value)) {
         cssChange = true;
+        const bgCoverOpacity = 0.05;
         let imgBgColor = el.getAttribute(ORIGINAL_BGCOLORATTR) || 'rgb(255,255,255)';
+        let imgBgCover // = `,linear-gradient(rgba(0,0,0,${bgCoverOpacity}), rgba(0,0,0,${bgCoverOpacity}))`;
 
         // 在背景图片上加一层bgCoverOpacity透明度灰色背景，适当降低图片亮度（已不适用）
         // 因为已经保留了背景图片内文字的原颜色，无需再加蒙层
@@ -2522,7 +2523,7 @@ const convert_demo = el => {
           if (el.getAttribute(BGIMAGEATTR) !== '1') { // 避免重复setAttribute
             getChildrenAndIt(el).forEach(dom => dom.setAttribute(BGIMAGEATTR, '1'));
           }
-          return `${match1}url(${match2})${match3},linear-gradient(rgba(0,0,0,${bgCoverOpacity}), rgba(0,0,0,${bgCoverOpacity})),linear-gradient(${imgBgColor}, ${imgBgColor})`;
+          return `${match1}url(${match2})${match3} ${imgBgCover || ''},linear-gradient(${imgBgColor}, ${imgBgColor})`;
           //return matches;
         });
 
