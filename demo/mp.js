@@ -2375,6 +2375,7 @@ const adjustBrightness_demo = (color, el, options) => {
     const parentElementBGPerceivedBrightness = (parentElementBgColorRgb[0] * 299 + parentElementBgColorRgb[1] * 587 + parentElementBgColorRgb[2] * 114) / 1000;
     const parentElementBGWithOpacityPerceivedBrightness = parentElementBGPerceivedBrightness * parentElementBgColorAlpha + DEFAULT_DARK_BGCOLOR_BRIGHTNESS * (1 - parentElementBgColorAlpha);
     const adjustTextBrightnessByLimitBrightness = (rgbArray, limitLowBright) => {
+      if (rgbArray[0] === 0 && rgbArray[1] === 0 && rgbArray[2] === 0) return Color.rgb(...rgbArray);
       const relativeBrightnessRatio = (limitLowBright * 1000) / (rgbArray[0] * 299 + rgbArray[1] * 587 + rgbArray[2] * 114);
           let newTextR = Math.min(255, rgbArray[0] * relativeBrightnessRatio);
           let newTextG = Math.min(255, rgbArray[1] * relativeBrightnessRatio);
@@ -2522,19 +2523,22 @@ const convert_demo = el => {
       }
 
       // 背景图片、边框图片
-      if ((/^background/.test(key) || /^(-webkit-)?border-image/.test(key)) && /url\([^\)]*\)/i.test(value)) {
+      const isBackgroundAttr = /^background/.test(key);
+      const isBorderImageAttr = /^(-webkit-)?border-image/.test(key);
+      if ((isBackgroundAttr || isBorderImageAttr) && /url\([^\)]*\)/i.test(value)) {
         cssChange = true;
         const bgCoverOpacity = 0.05;
         let imgBgColor = el.getAttribute(ORIGINAL_BGCOLORATTR) || 'rgb(255,255,255)';
-        let imgBgCover // = `,linear-gradient(rgba(0,0,0,${bgCoverOpacity}), rgba(0,0,0,${bgCoverOpacity}))`;
 
-        // 在背景图片上加一层bgCoverOpacity透明度灰色背景，适当降低图片亮度（已不适用）
-        // 因为已经保留了背景图片内文字的原颜色，无需再加蒙层
+        // 在背景图片下加一层原背景颜色：background-image使用多层背景；border-image不支持多层背景，需要添加background-color
         value = value.replace(/^(.*?)url\(([^\)]*)\)(.*)$/i, (matches, match1, match2, match3) => {
           if (el.getAttribute(BGIMAGEATTR) !== '1') { // 避免重复setAttribute
             getChildrenAndIt(el).forEach(dom => dom.setAttribute(BGIMAGEATTR, '1'));
           }
-          return `${match1}url(${match2})${match3} ${imgBgCover || ''},linear-gradient(${imgBgColor}, ${imgBgColor})`;
+          if(isBorderImageAttr && el.xx){//todo
+            css += genCss('background-color', imgBgColor);
+          }
+          return isBackgroundAttr ? `${match1}url(${match2})${match3},linear-gradient(${imgBgColor}, ${imgBgColor})` : matches;
           //return matches;
         });
 
