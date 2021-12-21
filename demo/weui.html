@@ -25,9 +25,6 @@
             box-sizing: border-box;
             z-index: 1
         }
-        .weui-msg__opr-area {
-            margin-bottom: 96px;
-        }
     </style>
     <script src=https://res.wx.qq.com/t/wx_fed/cdn_libs/res/vue/2.6.11/vue.min.js></script>
     <title></title>
@@ -45,7 +42,7 @@
                     <p class=weui-btn-area> <a @click=copy role=button class="weui-btn weui-btn_primary">确定</a> </p>
                 </div>
             </div>
-            <div v-else-if="errcode==0" class=weui-msg>
+            <div v-else-if="errcode==0" class=weui-msg style="display:none">
                 <div class=weui-msg__icon-area><i class="weui-icon-success weui-icon_msg"></i></div>
                 <div class=weui-msg__text-area>
                     <h2 class=weui-msg__title v-text=errmsg></h2>
@@ -55,7 +52,7 @@
                     <p class=weui-btn-area> <a @click=close role=button class="weui-btn weui-btn_primary">关闭</a> </p>
                 </div>
             </div>
-            <div v-else class=weui-msg>
+            <div v-else class=weui-msg style="display:none">
                 <div class=weui-msg__icon-area><i class="weui-icon-warn weui-icon_msg"></i></div>
                 <div class=weui-msg__text-area>
                     <h2 class=weui-msg__title v-text=errmsg></h2>
