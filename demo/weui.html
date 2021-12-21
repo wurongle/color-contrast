@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang=en>
+
+<head>
+    <meta charset=UTF-8>
+    <meta http-equiv=X-UA-Compatible content="IE=edge">
+    <meta name=viewport content="width=device-width,initial-scale=1,user-scalable=0,viewport-fit=cover">
+    <link rel=stylesheet href=https://res.wx.qq.com/t/wx_fed/weui-source/res/2.5.4/weui.min.css>
+    <style>
+        #app,
+        body,
+        html {
+            height: 100%;
+            -webkit-tap-highlight-color: transparent
+        }
+
+        .page {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            box-sizing: border-box;
+            z-index: 1
+        }
+    </style>
+    <script src=https://res.wx.qq.com/t/wx_fed/cdn_libs/res/vue/2.6.11/vue.min.js></script>
+    <title></title>
+</head>
+
+<body ontouchstart>
+    <div id=app>
+        <div class=page>
+            <div v-if=init class=weui-msg>
+                <div class=weui-msg__text-area>
+                    <h2 class=weui-msg__title>jump</h2>
+                    <p class=weui-msg__desc v-text=submsg></p>
+                </div>
+                <div class=weui-msg__opr-area>
+                    <p class=weui-btn-area> <a @click=copy role=button class="weui-btn weui-btn_primary">确定</a> </p>
+                </div>
+            </div>
+            <div v-else-if="errcode==0" class=weui-msg>
+                <div class=weui-msg__icon-area><i class="weui-icon-success weui-icon_msg"></i></div>
+                <div class=weui-msg__text-area>
+                    <h2 class=weui-msg__title v-text=errmsg></h2>
+                    <p class=weui-msg__desc v-text=submsg></p>
+                </div>
+                <div class=weui-msg__opr-area>
+                    <p class=weui-btn-area> <a @click=close role=button class="weui-btn weui-btn_primary">关闭</a> </p>
+                </div>
+            </div>
+            <div v-else class=weui-msg>
+                <div class=weui-msg__icon-area><i class="weui-icon-warn weui-icon_msg"></i></div>
+                <div class=weui-msg__text-area>
+                    <h2 class=weui-msg__title v-text=errmsg></h2>
+                    <p class=weui-msg__desc v-text=submsg></p>
+                </div>
+                <div class=weui-msg__opr-area>
+                    <p class=weui-btn-area> <a @click=close role=button class="weui-btn weui-btn_default">关闭</a> </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
