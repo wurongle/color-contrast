@@ -35,33 +35,14 @@
         <div class=page>
             <div v-if=init class=weui-msg>
                 <div class=weui-msg__text-area>
-                    <h2 class=weui-msg__title>jump2</h2>
+                    <h2 class=weui-msg__title>jump3</h2>
                     <p class=weui-msg__desc v-text=submsg></p>
                 </div>
                 <div class=weui-msg__opr-area>
                     <p class=weui-btn-area> <a @click=copy role=button class="weui-btn weui-btn_primary">确定</a> </p>
                 </div>
             </div>
-            <div v-else-if="errcode==0" class=weui-msg style="display:none">
-                <div class=weui-msg__icon-area><i class="weui-icon-success weui-icon_msg"></i></div>
-                <div class=weui-msg__text-area>
-                    <h2 class=weui-msg__title v-text=errmsg></h2>
-                    <p class=weui-msg__desc v-text=submsg></p>
-                </div>
-                <div class=weui-msg__opr-area>
-                    <p class=weui-btn-area> <a @click=close role=button class="weui-btn weui-btn_primary">关闭</a> </p>
-                </div>
-            </div>
-            <div v-else class=weui-msg style="display:none">
-                <div class=weui-msg__icon-area><i class="weui-icon-warn weui-icon_msg"></i></div>
-                <div class=weui-msg__text-area>
-                    <h2 class=weui-msg__title v-text=errmsg></h2>
-                    <p class=weui-msg__desc v-text=submsg></p>
-                </div>
-                <div class=weui-msg__opr-area>
-                    <p class=weui-btn-area> <a @click=close role=button class="weui-btn weui-btn_default">关闭</a> </p>
-                </div>
-            </div>
+           
         </div>
     </div>
 </body>
